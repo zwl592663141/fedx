@@ -1,0 +1,45 @@
+1、编译方法
+   ksh make_oracle
+   测试时，将load_main.h文件的 #define  DEBUG_INFO  放开，可以打印出错信息，
+   注意，待正式运行后，将此行注释掉。
+
+2、调用方式
+  load_proc 进程标识 数据库口令文件 数据库名称
+  例如：load_proc sp_l_load /pkg02/cfg/db_login.DBROAM settledb
+
+3、基本功能
+   a、一个文件只能入一张表，表名可以根据文件名动态求出
+   b、程序启动时，能够检查同一进程是否启动，避免同一程序重复启动
+   c、速度：insert方式 1000条/秒   direct方式  20000条/秒
+   d、支持后台表调度
+   e、修改了配置方式，采用三张表，便于配置。
+
+20070716 更改
+   1、完善出错信息的输出，提示，在测试配置是否正确时，请将入库方式置成insert方式，这样可以捕获各类错误。
+      待测试完毕后，再将入库方式改为需要的方式。
+   2、b_load_file表增加cancel_line字段，用于决定文件是否忽略头尾记录
+
+20090308 更改，升级到5.3
+   1、支持变长格式
+   2、支持oracle函数
+   3、编译时自动识别oracle8i, oracle9i, oracle10g
+            自动识别AIX、HP-UX、SunOs、Linux
+ 
+   注意：如果你的系统已经存在旧版本创建的配置表了，请用下列语句修改：
+       alter table B_LOAD_FILE modify FILE_HEAD VARCHAR2(50);
+       alter table B_LOAD_FILE modify PROC_NAME VARCHAR2(50);
+       alter table B_LOAD_FILE modify FIELD_ID VARCHAR2(40);       
+       alter table B_LOAD_FIELD modify ID VARCHAR2(40);
+       alter table B_LOAD_FIELD modify FIELD_NAME VARCHAR2(40);
+       alter table B_LOAD_FIELD modify FORMAT VARCHAR2(100);       
+       alter table B_LOAD_PARAM modify PROC_NAME VARCHAR2(50);
+       alter table B_LOAD_PARAM modify PARAM_VALUE VARCHAR2(200);
+       
+   否则，请直接使用“入库配置示例.xls”文档中的建表脚本创建配置表
+
+20180524 更改 
+    1.支撑云化
+    2.调整程序支撑入口文件为不同文件名
+
+20180618  更改
+    1.修改b_load_field表名可配置，用于支撑配置无主和错单的两种入口文件格式

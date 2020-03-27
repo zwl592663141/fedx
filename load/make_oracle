@@ -1,0 +1,60 @@
+#! /usr/bin/sh
+
+out=load_proc
+in_c="*.c"
+in_o="*.o"
+
+####################################   ORACLE版本   ############################
+flag0=`echo $ORACLE_HOME |grep 12`
+flag1=`echo $ORACLE_HOME |grep 9`
+flag2=`echo $ORACLE_HOME |grep 10`
+if [ "@$flag1" != "@" ] ; then
+    ORA_VER=9
+elif [ "@$flag2" != "@" ] ; then
+    ORA_VER=10
+elif [ "@$flag0" != "@" ] ; then
+    ORA_VER=12
+else
+    echo "no oracle"
+    echo ""
+    exit 1
+fi
+
+####################################   操作系统设置   ############################
+u_name=`uname -s 2>/dev/null`
+if [ "$u_name" = "AIX" ]
+then
+    CC="cc -q64 "
+elif [ "$u_name" = "HP-UX" ]
+then 
+    CC="cc +DD64 "
+elif [ "$u_name" = "SunOS" ]
+then 
+    CC="cc -xarch=native64 -lsocket -D_REENTRANT "
+elif [ "$u_name" = "Linux" ]
+then 
+    CC="cc "
+else
+    echo "invalid os"
+    exit 1
+fi
+
+STATIC_LIB=${ORACLE_HOME}/lib
+RDBMS_LIB=${ORACLE_HOME}/rdbms/lib/
+PLSQL_I=${ORACLE_HOME}/plsql/public/
+PUBLIC_I=${ORACLE_HOME}/rdbms/public/
+OCI_I=${ORACLE_HOME}/rdbms/include/
+NETWORK_I=${ORACLE_HOME}/network/public/
+PUBLIC_DEMO=${ORACLE_HOME}/rdbms/demo/
+
+ORACLE_OBJS="${STATIC_LIB}/nautab.o ${STATIC_LIB}/naeet.o ${STATIC_LIB}/naect.o ${STATIC_LIB}/naedhs.o"
+
+CFLAGS="-g -L${STATIC_LIB} -L${RDBMS_LIB} -I${OCI_I} -I${PUBLIC_I} -I${PLSQL_I} -I${NETWORK_I} -I${PUBLIC_DEMO} -I${SDFS_HOME}/include -I${DSC_PATH}/include -I${FRAMEWORK_HOME}/include"
+
+LIBS=" -lclntsh -lnsl -lclient${ORA_VER} -lcommon${ORA_VER} -lcore${ORA_VER} -lnls${ORA_VER} -lm -L${SDFS_HOME}/lib -lsdfs -L${DSC_PATH}/lib/ -ldsc -L${DCI_HOME}/dci/lib -lddci  -L${FRAMEWORK_HOME}/lib -lframe -ldl -lpthread -lclntshcore"
+
+${CC} ${CFLAGS} -c ${in_c}
+${CC} ${CFLAGS} -o ${out} ${in_o} ${ORACLE_OBJS} ${LIBS} 
+
+rm ${in_o}
+mv load_proc  ~/billapp/bin

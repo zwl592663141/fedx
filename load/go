@@ -1,0 +1,47 @@
+#!/bin/sh
+if [ $# -ne 2 ];then
+	echo "Usage: sh $0 start/stop  err/card"
+	exit 1
+fi
+
+
+mode=$1
+type=$2
+start()
+{
+sqlplus -s HBDX_COMP/hbdx_0823@gwcaiji << !
+update b_sys_proc set operator_id=0;
+commit;
+quit
+!
+}
+stop()
+{
+sqlplus -s HBDX_COMP/hbdx_0823@gwcaiji << !
+update b_sys_proc set operator_id=1;
+commit;
+quit
+!
+
+}
+
+
+if [ "${mode}" == "start" ];then
+	start
+if [ "${type}" == "err" ];then
+	for i in {1..4};do
+	nohup /data/billing/billapp/bin/load_proc LOAD_ERR ~/billapp/cfg/CLUSTER_ERR/load/login.gwcaiji  gwcaiji >/dev/null &
+	done
+elif [ "${type}" == "nouser" ];then
+	/data/billing/billapp/bin/load_proc LOAD_NOUSER ~/billapp/cfg/CLUSTER_ERR/load/login.gwcaiji  gwcaiji >/dev/null &
+	/data/billing/billapp/bin/load_proc LOAD_NOUSER ~/billapp/cfg/CLUSTER_ERR/load/login.gwcaiji  gwcaiji >/dev/null &
+elif [ "${type}" == "card" ];then
+	nohup /data/billing/billapp/bin/load_proc LOAD_CARD ~/billapp/cfg/CLUSTER_ERR/load/login.gwcaiji  gwcaiji >/dev/null &
+	nohup /data/billing/billapp/bin/load_proc LOAD_CARD ~/billapp/cfg/CLUSTER_ERR/load/login.gwcaiji  gwcaiji  >/dev/null &
+else
+	echo "Param value is error,input err/nouser/card,please"
+	exit 3
+fi
+elif [ "${mode}" == "stop" ];then
+	stop
+fi
